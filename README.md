@@ -5,7 +5,7 @@ Requires Azerothcore, Ale, and AIO both client and server. Built on AIO 1.75.
 Adds a customizable transmog system using an intuitive UI button accessible from anywhere. The script auto creates tables and handles everything silently. Save sets, check unlocked sets and appearances.
 This lua script was built with TransmogByDan as the foundation, and the addon Dressme. 
 
-You can save custom sets, see how much of baseline in game sets you have collected, etc. Any item that enters your inventory you collect the appearance for. No notifications, no bloat. No credit card, no Bull$hit 🤪 I kid.
+You can save custom sets, see how much of baseline in game sets you have collected, etc. Any item that enters your inventory you collect the appearance for. No notifications, no bloat. No credit card, no signup no Bull$hit 🤪 I kid.
 
 - Credit to Dan for his original script: https://github.com/DanieltheDeveloper/azerothcore-transmog-3.3.5a
 - Credit to the creator of Dressme as a baseline source for the addon side of this. https://legacy-wow.com/wotlk-addons/dressme/
