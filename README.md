@@ -10,7 +10,7 @@ Requires Azerothcore, Ale, and AIO both client and server. Built on AIO 1.75.
 You can save custom sets, see how much of in game sets you have collected Like Relentless Gladiator set (8/9) for example, etc. Any item that enters your inventory you collect the appearance for. No notifications, no bloat. No credit card, no signup, no Bull$hit 🤪 I kid.
 
 - Credit to Dan for his original script I used as a baseline and grew from: https://github.com/DanieltheDeveloper/azerothcore-transmog-3.3.5a
-- Credit to the creator of Dressme as a baseline source for the addon side of this. https://legacy-wow.com/wotlk-addons/dressme/
+- Credit to GetLocalPlayer for their original DressMe addon I used as a baseline source for the addon side of this. [https://legacy-wow.com/wotlk-addons/dressme/](https://github.com/GetLocalPlayer/DressMe)
 
 Installation:
 1. Put the lua script in your azerothcore lua scripts folder.
