@@ -8,6 +8,9 @@ Requires Azerothcore, Ale, and AIO both client and server. Built on AIO 1.75.
 - This lua script was built with TransmogByDan as the foundation, and the addon Dressme.
 - The script should auto handle creating tables for itself. If you install it, and it crashes, try restarting your server again. If it still crashes, message me on discord.
 
+**IMPORTANT NOTE**
+- When you open the sets catalog, and do a refresh scan, it will lag. I promise you it will. You NEED to be patient please, its doing a LOT of work behind the scenes to pull the set data and all that. Don't click refresh mid combat, that probably wouldn't be good for your characters health.
+
 You can save custom sets, see how much of in game sets you have collected Like Relentless Gladiator set (8/9) for example, etc. Any item that enters your inventory you collect the appearance for. No notifications, no bloat. No credit card, no signup, no Bull$hit 🤪 I kid.
 
 - Credit to Dan for his original script I used as a baseline and grew from: https://github.com/DanieltheDeveloper/azerothcore-transmog-3.3.5a
