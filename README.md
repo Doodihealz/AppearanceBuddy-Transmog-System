@@ -6,6 +6,7 @@ Requires Azerothcore, Ale, and AIO both client and server. Built on AIO 1.75.
 - You can customize the ui with the settings tab, like auto setting the background for the races based on which is used. (Orc is orc background, Tauren is Mulgore, etc.)
 - Turn your character with click-dragging, use your mousewheel on the character frame to zoom in and out, use your mousewheel on the transmog options to the right to advance to the next page or go back.
 - This lua script was built with TransmogByDan as the foundation, and the addon Dressme.
+- The script should auto handle creating tables for itself. If you install it, and it crashes, try restarting your server again. If it still crashes, message me on discord.
 
 You can save custom sets, see how much of in game sets you have collected Like Relentless Gladiator set (8/9) for example, etc. Any item that enters your inventory you collect the appearance for. No notifications, no bloat. No credit card, no signup, no Bull$hit 🤪 I kid.
 
