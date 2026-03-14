@@ -15,3 +15,13 @@ Installation:
 
 I will not add support for custom races or anything. The script and addon are provided as is, and changes are made as I see fit.
 I ask you do NOT sell this.
+
+## Examples
+
+![Items browser](https://github.com/user-attachments/assets/5922cbb3-0b2e-4a26-984b-19c159030809)
+
+![Saved transmog sets](https://github.com/user-attachments/assets/498cba00-51f5-43ac-9a88-1553222ed21d)
+
+![Catalog - unlocked item sets](https://github.com/user-attachments/assets/8a95c2ed-279f-4f38-8e1c-dc3f914bcb38)
+
+![Item tooltip preview](https://github.com/user-attachments/assets/cc2a1271-cba5-4db0-91ab-7617892353de)
