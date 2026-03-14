@@ -2,7 +2,7 @@
 
 Requires Azerothcore, Ale, and AIO both client and server. Built on AIO 1.75.
 
-- Adds a customizable transmog system using an intuitive UI button accessible from anywhere. The script auto creates tables and handles everything silently. Save sets, check unlocked sets and appearances.
+- Adds a customizable transmog system using an intuitive UI button accessible from anywhere. The script auto creates tables and handles everything silently. Save sets, check unlocked sets and appearances. No more relying on Gossip NPC menu options!
 - You can customize the ui with the settings tab, like auto setting the background for the races based on which is used. (Orc is orc background, Tauren is Mulgore, etc.)
 - Turn your character with click-dragging, use your mousewheel on the character frame to zoom in and out, use your mousewheel on the transmog options to the right to advance to the next page or go back.
 - This lua script was built with TransmogByDan as the foundation, and the addon Dressme.
