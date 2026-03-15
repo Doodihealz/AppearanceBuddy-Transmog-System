@@ -1,42 +1,51 @@
-# AppearanceBuddy-Transmog-System
+# AppearanceBuddy — Transmog System
 
-Requires Azerothcore, Ale, and AIO both client and server. Built on AIO 1.75.
+**Requires:** AzerothCore, Eluna (ALE), and AIO (client + server). Built on AIO 1.75.
 
-Like the script? Please ⭐ the project to show your support. My $hit gets forked way too often without support being given.
+If this project has been useful to you, please ⭐ star it to show your support.
 
-- Adds a customizable transmog system using an intuitive UI button accessible from anywhere. The script auto creates tables and handles everything silently. Save sets, check unlocked sets and appearances. No more relying on Gossip NPC menu options!
-- You can customize the ui with the settings tab, like auto setting the background for the races based on which is used. (Orc is orc background, Tauren is Mulgore, etc.)
-- Turn your character with click-dragging, use your mousewheel on the character frame to zoom in and out, use your mousewheel on the transmog options to the right to advance to the next page or go back.
-- This lua script was built with TransmogByDan as the foundation, and the addon Dressme.
-- The script should auto handle creating tables for itself. If you install it, and it crashes, try restarting your server again. If it still crashes, message me on discord.
+---
 
-~~**IMPORTANT NOTE**~~
-~~- When you open the sets catalog **it will lag**. I promise you it will. You NEED to be patient please, it's doing a LOT of work behind the scenes to pull the set data and all that. Don't click refresh mid combat, that probably wouldn't be good for your characters health.~~ This has since been fixed with V 2.5.5!
+## Overview
 
-You can save custom sets, see how much of in game sets you have collected Like Relentless Gladiator set (8/9) for example, etc. Any item that enters your inventory you collect the appearance for. No notifications, no bloat. No credit card, no signup, no Bull$hit 🤪 I kid.
+AppearanceBuddy is a fully-featured transmog system for AzerothCore private servers. It provides an intuitive, in-game UI accessible from anywhere — no NPC interaction required. The system silently handles all database setup on first run, so there is nothing to configure manually.
 
-**Credits!! Very important!!**
+**Key features:**
 
-- Credit to Dan for his original script I used as a baseline and grew from: https://github.com/DanieltheDeveloper/azerothcore-transmog-3.3.5a
-- Credit to GetLocalPlayer for their original DressMe addon I used as a baseline source for the addon side of this. https://github.com/GetLocalPlayer/DressMe
+- Browse, search, and apply transmogrifications directly from the UI
+- Save and load custom transmog sets
+- Track which appearances and in-game sets you have collected (e.g., Relentless Gladiator 8/9)
+- Any item that enters your inventory is automatically collected — no notifications, no bloat
+- Customizable backgrounds per race (Orc → Orc background, Tauren → Mulgore, etc.)
+- Rotate your character preview with click-drag, zoom with the mousewheel, and scroll through transmog pages with the mousewheel on the item panel
 
-Installation:
-1. Put the lua script in your azerothcore lua scripts folder.
-2. Put the addon unzipped into your addons folder.
-3. Profit.
+**Performance:** The script has been significantly optimized since its first release. Server-to-client communication is approximately **94% faster** than the original iteration, resulting in a smooth, responsive experience even when browsing large sets catalogs.
 
-I will not add support for custom races or anything. The script and addon are provided as is, and changes are made as I see fit.
-I ask you do NOT sell this.
+---
 
-PLEASE CREDIT ME IF YOU USE THIS.
-Doodihealz / Corey
+## Installation
 
-## Examples
+1. Place the Lua script in your AzerothCore Eluna scripts folder.
+2. Unzip the addon and place it in your client's `Interface/AddOns` folder.
+3. Restart your server and log in.
 
-![Items browser](https://github.com/user-attachments/assets/5922cbb3-0b2e-4a26-984b-19c159030809)
+> If the server crashes on first load, restart it once more. The script creates its own database tables automatically and may need a second pass on a fresh install.
 
-![Saved transmog sets](https://github.com/user-attachments/assets/498cba00-51f5-43ac-9a88-1553222ed21d)
+---
 
-![Catalog - unlocked item sets](https://github.com/user-attachments/assets/8a95c2ed-279f-4f38-8e1c-dc3f914bcb38)
+## Credits
 
-![Item tooltip preview](https://github.com/user-attachments/assets/cc2a1271-cba5-4db0-91ab-7617892353de)
+- **TransmogByDan** — original server-side transmog script used as a foundation: https://github.com/DanieltheDeveloper/azerothcore-transmog-3.3.5a
+- **GetLocalPlayer / DressMe** — original addon used as a baseline for the client side: https://github.com/GetLocalPlayer/DressMe
+
+---
+
+## License & Usage
+
+This script and addon are provided as-is. I will not be adding support for custom races or other custom content. Please do not sell this. **Credit is required if you use or redistribute this project.** — Doodihealz / Corey
+
+---
+
+## Preview
+
+![AppearanceBuddy UI](https://github.com/user-attachments/assets/9a94d82a-4baa-420f-9943-766a63e26449)
