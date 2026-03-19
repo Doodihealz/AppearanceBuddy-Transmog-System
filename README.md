@@ -2,7 +2,7 @@
 
 **Requires:** AzerothCore, Eluna (ALE), and AIO (client + server). Built on AIO 1.75.
 
-If this project has been useful to you, please ⭐ star it to show your support.
+If this project has been useful to you, please ⭐ it to show your support.
 
 ---
 
