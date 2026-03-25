@@ -16,7 +16,8 @@ AppearanceBuddy is a fully-featured transmog system for AzerothCore private serv
 - Save and load custom transmog sets
 - Track which appearances and in-game sets you have collected (e.g., Relentless Gladiator 8/9)
 - Any item that enters your inventory is automatically collected — no notifications, no bloat
-- Customizable backgrounds per race (Orc → Orc background, Tauren → Mulgore, etc.)
+- Customizable backgrounds per race (Orc → Durotar background, Tauren → Mulgore, etc.)
+- Items show if you have unlocked the display appearance or not yet with a border and/or a tooltip message
 - Rotate your character preview with click-drag, zoom with the mousewheel, and scroll through transmog pages with the mousewheel on the item panel
 
 **Performance:** The script has been significantly optimized since its first release. Server-to-client communication is approximately **94% faster** than the original iteration, resulting in a smooth, responsive experience even when browsing large sets catalogs.
