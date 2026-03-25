@@ -20,7 +20,7 @@ AppearanceBuddy is a fully-featured transmog system for AzerothCore private serv
 - Items show if you have unlocked the display appearance or not yet with a border and/or a tooltip message
 - Rotate your character preview with click-drag, zoom with the mousewheel, and scroll through transmog pages with the mousewheel on the item panel
 
-**Performance:** The script has been significantly optimized since its first release. Server-to-client communication is approximately **94% faster** than the original iteration, resulting in a smooth, responsive experience even when browsing large sets catalogs.
+**Performance:** The script has been significantly optimized since its first release. Server-to-client communication is approximately **97% faster** than the original iteration, resulting in a smooth, responsive experience even when browsing large sets catalogs. It's better, but not perfect. It's almost seamless going between pages and loading items. There's more work to do but I'm pretty proud of it overall so far.
 
 ---
 
