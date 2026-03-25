@@ -43,7 +43,7 @@ AppearanceBuddy is a fully-featured transmog system for AzerothCore private serv
 
 ## License & Usage
 
-This script and addon are provided as-is. I will not be adding support for custom races or other custom content. Please do not sell this. **Credit is required if you use or redistribute this project.** — Doodihealz / Corey
+This script and addon are provided as-is. I will not be adding support for custom races or other custom content. Please do not sell this. I mean it. **I ask for credit if you share, modify, or use this in your server** — Doodihealz / Corey
 
 ---
 
