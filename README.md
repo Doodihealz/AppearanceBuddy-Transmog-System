@@ -26,7 +26,7 @@ AppearanceBuddy is a fully-featured transmog system for AzerothCore private serv
 
 ## Installation
 
-1. Place the Lua script in your AzerothCore Eluna scripts folder.
+1. Place the Lua script in your AzerothCore lua scripts folder.
 2. Unzip the addon and place it in your client's `Interface/AddOns` folder.
 3. Restart your server and log in.
 
