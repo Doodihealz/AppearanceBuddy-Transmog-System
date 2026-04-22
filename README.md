@@ -147,13 +147,14 @@ Additional notes:
 
 > On a completely fresh install the server may crash once while creating its database tables. Restart it once more and it will load cleanly from then on.
 
-## Credits
+##⭐ Credits⭐
 
 - **TransmogByDan** — original server-side script used as a foundation:  
   `https://github.com/DanieltheDeveloper/azerothcore-transmog-3.3.5a`
 - **GetLocalPlayer / DressMe** — original addon used as a baseline for the client side:  
   `https://github.com/GetLocalPlayer/DressMe`
-
+Sincerely. 
+- Thank you to both of these people for their work. I truly mean that. This would have been much harder if not impossible to have in its current form without them.
 ## License & Usage
 
 Provided as-is.
