@@ -23,12 +23,6 @@
 
 ---
 
-## Overview
-
-AppearanceBuddy is a fully-featured, account-wide transmog system for AzerothCore private servers.
-
-Open it anywhere with `/ab` or click the character page button — no NPC interaction required. The database creates itself on first run. Every item that enters your inventory is automatically collected. There is nothing to configure to get started.
-
 ## Features
 
 ### Appearance Collection
