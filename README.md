@@ -6,7 +6,7 @@
 </p>
 
 <p align="center">
-  AppearanceBuddy is a fully-featured, account-wide transmog system for AzerothCore private servers.
+  AppearanceBuddy is a fully-featured, account-wide transmog system for AzerothCore.
 </p>
 
 <p align="center">
