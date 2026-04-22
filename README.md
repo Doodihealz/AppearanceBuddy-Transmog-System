@@ -161,7 +161,7 @@ Provided as-is.
 
 Custom races and other custom content are out of scope and will not be supported.
 
-Please do not sell this. Credit is required if you share, modify, or use this on your server — **Doodihealz / Corey**.
+Please do not sell this. If you send this to someone please do not credit it as your own. I worked hard on this and gave ample credit where it was due. Please, just be fair... — **Doodihealz / Corey**.
 
 ## Preview
 
