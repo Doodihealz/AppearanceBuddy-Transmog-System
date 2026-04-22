@@ -105,7 +105,7 @@ Additional notes:
 - Show transmog cost in status bar
 - Hide placeholder items (items with no required level and item level ≤ 1)
 
-## Slash Commands
+## Slash Commands and .GM Commands
 
 | Command | Effect |
 |---|---|
