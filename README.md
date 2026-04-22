@@ -1,8 +1,27 @@
-# AppearanceBuddy — Transmog System for AzerothCore
+<h1 align="center">AppearanceBuddy</h1>
+<p align="center"><strong>Transmog System for AzerothCore</strong></p>
 
-**Requires:** AzerothCore, ALE, and AIO (client + server). Built on AIO 1.75.
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/684b1a04-f3b9-4b0d-8eec-8ff7e1e76bb5" width="120" alt="AppearanceBuddy Logo" />
+</p>
 
-If this project has been useful to you, please ⭐ it.
+<p align="center">
+  AppearanceBuddy is a fully-featured, account-wide transmog system for AzerothCore private servers.
+</p>
+
+<p align="center">
+  <strong>Requires:</strong> AzerothCore, ALE, and AIO (client + server). Built on AIO 1.75.
+</p>
+
+<p align="center">
+  Open it anywhere with <code>/ab</code> or click the character page button — no NPC interaction required.
+</p>
+
+<p align="center">
+  If this project has been useful to you, please ⭐ it.
+</p>
+
+---
 
 ## Overview
 
@@ -144,9 +163,8 @@ Custom races and other custom content are out of scope and will not be supported
 Please do not sell this. Credit is required if you share, modify, or use this on your server — **Doodihealz / Corey**.
 
 ## Preview
+
 <img width="1746" height="836" alt="image" src="https://github.com/user-attachments/assets/6d0d7d33-b39b-4e90-ba10-1664093916ae" />
 <img width="1752" height="835" alt="image" src="https://github.com/user-attachments/assets/5479819f-1706-497d-84d1-1bd285abb72d" />
 <img width="1751" height="845" alt="image" src="https://github.com/user-attachments/assets/d2b6cdd8-d8ff-4944-9ad6-2ade4c760df7" />
 <img width="657" height="592" alt="image" src="https://github.com/user-attachments/assets/a0746957-0ba9-4a40-bc93-77a2b70d6887" />
-
-
