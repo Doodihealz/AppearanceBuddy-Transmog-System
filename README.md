@@ -1,9 +1,10 @@
 <h1 align="center">AppearanceBuddy</h1>
-<p align="center"><strong>Transmog System for AzerothCore</strong></p>
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/684b1a04-f3b9-4b0d-8eec-8ff7e1e76bb5" width="120" alt="AppearanceBuddy Logo" />
 </p>
+
+<p align="center"><strong>Transmog System for AzerothCore</strong></p>
 
 <p align="center">
   AppearanceBuddy is a fully-featured, account-wide transmog system for AzerothCore.
