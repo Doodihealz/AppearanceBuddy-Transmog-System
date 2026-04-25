@@ -150,6 +150,7 @@ Additional notes:
   `https://github.com/GetLocalPlayer/DressMe`
 Sincerely. 
 - Thank you to both of these people for their work. I truly mean that. This would have been much harder if not impossible to have in its current form without them.
+- Also a big thanks to Zerken on Discord for helping troubleshoot and provide feedback!
 ## License & Usage
 
 Provided as-is.
