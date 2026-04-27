@@ -144,13 +144,10 @@ Additional notes:
 
 ## ⭐Credits⭐
 
-- **TransmogByDan** — original server-side script used as a foundation:  
-  `https://github.com/DanieltheDeveloper/azerothcore-transmog-3.3.5a`
-- **GetLocalPlayer / DressMe** — original addon used as a baseline for the client side:  
-  `https://github.com/GetLocalPlayer/DressMe`
-Sincerely. 
-- Thank you to both of these people for their work. I truly mean that. This would have been much harder if not impossible to have in its current form without them.
-- Also a big thanks to Zerken on Discord for helping troubleshoot and provide feedback!
+- **TransmogByDan** — original server-side script used as a foundation: https://github.com/DanieltheDeveloper/azerothcore-transmog-3.3.5a
+- **GetLocalPlayer / DressMe** — original addon used as a baseline for the client side: https://github.com/GetLocalPlayer/DressMe
+- Thank you to **Rochet2** for your work on AIO: https://github.com/Rochet2/AIO
+- Thank you to all the people who actively helped provide bug feedback during development!
 ## License & Usage
 
 Provided as-is.
