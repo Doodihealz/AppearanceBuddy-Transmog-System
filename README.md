@@ -1,1 +1,1 @@
-This is the preview tree. The stuff here is heavily WIP. Expect bugs. Expect stuff to be broken. It will be updated VERY frequently. If thats not your cup of tea, stick with the Main branch. Once something here is finalized it will go to Main.
+This is the preview tree! The stuff here is heavily WIP. Expect bugs. Expect stuff to be broken. It will be updated VERY frequently. If thats not your cup of tea, stick with the Main branch. Once something here is finalized then it will go to Main.
