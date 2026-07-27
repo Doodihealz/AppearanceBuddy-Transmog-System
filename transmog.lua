@@ -554,10 +554,13 @@ AppearanceEligibility.Allows = IsAppearanceAllowedForPlayer
 AppearanceEligibility.GetCacheKey = GetAppearanceEligibilityCacheKey
 end
 
--- Schema changes are intentionally never executed from a live gameplay script.
--- Install or upgrade with the reviewed offline migration before reloading ALE.
+-- Bootstrap only the absent persistence tables while the script loads. This
+-- makes a missing or failed packaged migration recover on the next startup
+-- without touching data in an existing table. Non-additive legacy repairs
+-- remain an offline operation so a gameplay script never rewrites player data.
 local CHARACTER_SCHEMA_MIGRATION_FILE = "migrations/2026_07_20_appearancebuddy_characters.sql"
 local AUTH_SCHEMA_MIGRATION_FILE = "migrations/2026_07_20_appearancebuddy_auth.sql"
+local TRANSMOG_SCHEMA_AUTO_BOOTSTRAP_ENABLED = true
 local TRANSMOG_PERSISTENCE_SCHEMA_READY = false
 local REQUIRED_TRANSMOG_TABLE_COLUMNS = {
     account_transmog = {
@@ -597,6 +600,85 @@ local MYSQL_TEXT_TYPES = {
     mediumtext = true,
     longtext = true,
 }
+local TRANSMOG_PERSISTENCE_TABLES = {
+    {
+        databaseLabel = "auth",
+        queryFunction = AuthDBQuery,
+        sentinelTableName = "account",
+        tableName = "account_transmog",
+        firstKeyColumn = "account_id",
+        secondKeyColumn = "unlocked_item_id",
+        createStatement = [[
+CREATE TABLE IF NOT EXISTS `account_transmog` (
+    `account_id` INT UNSIGNED NOT NULL,
+    `unlocked_item_id` INT UNSIGNED NOT NULL,
+    `display_id` INT UNSIGNED NOT NULL,
+    `inventory_type` INT UNSIGNED NULL,
+    `item_name` VARCHAR(255) NULL,
+    PRIMARY KEY (`account_id`, `unlocked_item_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+]],
+    },
+    {
+        databaseLabel = "auth",
+        queryFunction = AuthDBQuery,
+        sentinelTableName = "account",
+        tableName = "account_transmog_removed_appearance",
+        firstKeyColumn = "account_id",
+        secondKeyColumn = "display_id",
+        createStatement = [[
+CREATE TABLE IF NOT EXISTS `account_transmog_removed_appearance` (
+    `account_id` INT UNSIGNED NOT NULL,
+    `display_id` INT UNSIGNED NOT NULL,
+    PRIMARY KEY (`account_id`, `display_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+]],
+    },
+    {
+        databaseLabel = "characters",
+        queryFunction = CharDBQuery,
+        sentinelTableName = "characters",
+        tableName = "character_transmog",
+        firstKeyColumn = "player_guid",
+        secondKeyColumn = "slot",
+        createStatement = [[
+CREATE TABLE IF NOT EXISTS `character_transmog` (
+    `player_guid` INT UNSIGNED NOT NULL,
+    `slot` SMALLINT UNSIGNED NOT NULL,
+    `item` INT UNSIGNED NULL,
+    `real_item` INT UNSIGNED NULL,
+    PRIMARY KEY (`player_guid`, `slot`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+]],
+    },
+    {
+        databaseLabel = "characters",
+        queryFunction = CharDBQuery,
+        sentinelTableName = "characters",
+        tableName = "character_transmog_weapon_enchant",
+        firstKeyColumn = "player_guid",
+        secondKeyColumn = "equipment_slot",
+        createStatement = [[
+CREATE TABLE IF NOT EXISTS `character_transmog_weapon_enchant` (
+    `player_guid` INT UNSIGNED NOT NULL,
+    `equipment_slot` TINYINT UNSIGNED NOT NULL,
+    `enchant_id` SMALLINT UNSIGNED NOT NULL,
+    PRIMARY KEY (`player_guid`, `equipment_slot`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+]],
+    },
+}
+
+local function DatabaseTableExists(queryFunction, tableName)
+    if type(queryFunction) ~= "function" then
+        return false
+    end
+    local ok, query = pcall(queryFunction,
+        "SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '"
+        .. tableName .. "' LIMIT 1"
+    )
+    return ok and query ~= nil
+end
 
 local function DatabaseColumnMatchesRequirement(column, requirement)
     if not column or not requirement then
@@ -629,10 +711,13 @@ end
 
 local function DatabaseTableHasRequiredColumns(queryFunction, tableName)
     local requirements = REQUIRED_TRANSMOG_TABLE_COLUMNS[tableName]
-    if not requirements then
+    if not requirements or not DatabaseTableExists(queryFunction, tableName) then
         return false
     end
-    local ok, query = pcall(queryFunction, "SHOW COLUMNS FROM `" .. tableName .. "`")
+    local ok, query = pcall(queryFunction,
+        "SELECT COLUMN_NAME, COLUMN_TYPE, IS_NULLABLE FROM information_schema.COLUMNS "
+        .. "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '" .. tableName .. "'"
+    )
     if not ok or not query then
         return false
     end
@@ -657,20 +742,23 @@ local function DatabaseTableHasRequiredColumns(queryFunction, tableName)
 end
 
 local function DatabaseTableHasUniqueKey(queryFunction, tableName, firstColumn, secondColumn)
-    if not REQUIRED_TRANSMOG_TABLE_COLUMNS[tableName] then
+    if not REQUIRED_TRANSMOG_TABLE_COLUMNS[tableName] or not DatabaseTableExists(queryFunction, tableName) then
         return false
     end
-    local ok, query = pcall(queryFunction, "SHOW INDEX FROM `" .. tableName .. "`")
+    local ok, query = pcall(queryFunction,
+        "SELECT NON_UNIQUE, INDEX_NAME, SEQ_IN_INDEX, COLUMN_NAME FROM information_schema.STATISTICS "
+        .. "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '" .. tableName .. "'"
+    )
     if not ok or not query then
         return false
     end
 
     local indexes = {}
     repeat
-        local nonUnique = tonumber(query:GetUInt32(1)) or 1
-        local keyName = query:GetString(2) or ""
-        local sequence = tonumber(query:GetUInt32(3)) or 0
-        local columnName = query:GetString(4) or ""
+        local nonUnique = tonumber(query:GetUInt32(0)) or 1
+        local keyName = query:GetString(1) or ""
+        local sequence = tonumber(query:GetUInt32(2)) or 0
+        local columnName = query:GetString(3) or ""
         if nonUnique == 0 and keyName ~= "" and sequence > 0 then
             indexes[keyName] = indexes[keyName] or {}
             indexes[keyName][sequence] = columnName
@@ -685,41 +773,100 @@ local function DatabaseTableHasUniqueKey(queryFunction, tableName, firstColumn, 
     return false
 end
 
-do
+local function GetTransmogPersistenceSchemaHealth()
+    local missingTables = {}
     local incompatible = {}
-    if not DatabaseTableHasRequiredColumns(AuthDBQuery, "account_transmog") then
-        incompatible[#incompatible + 1] = "auth.account_transmog"
+    local missingKeys = {}
+    for _, definition in ipairs(TRANSMOG_PERSISTENCE_TABLES) do
+        if not DatabaseTableExists(definition.queryFunction, definition.tableName) then
+            missingTables[#missingTables + 1] = definition.databaseLabel .. "." .. definition.tableName
+        elseif not DatabaseTableHasRequiredColumns(definition.queryFunction, definition.tableName) then
+            incompatible[#incompatible + 1] = definition.databaseLabel .. "." .. definition.tableName
+        elseif not DatabaseTableHasUniqueKey(
+            definition.queryFunction,
+            definition.tableName,
+            definition.firstKeyColumn,
+            definition.secondKeyColumn
+        ) then
+            missingKeys[#missingKeys + 1] = definition.databaseLabel .. "." .. definition.tableName
+        end
     end
-    if not DatabaseTableHasRequiredColumns(AuthDBQuery, "account_transmog_removed_appearance") then
-        incompatible[#incompatible + 1] = "auth.account_transmog_removed_appearance"
-    end
-    if not DatabaseTableHasRequiredColumns(CharDBQuery, "character_transmog") then
-        incompatible[#incompatible + 1] = "characters.character_transmog"
-    end
-    if not DatabaseTableHasRequiredColumns(CharDBQuery, "character_transmog_weapon_enchant") then
-        incompatible[#incompatible + 1] = "characters.character_transmog_weapon_enchant"
+    return missingTables, incompatible, missingKeys
+end
+
+local function RunTransmogSchemaBootstrap()
+    if not TRANSMOG_SCHEMA_AUTO_BOOTSTRAP_ENABLED then
+        return false
     end
 
-    local hasRequiredKeys = #incompatible == 0
-        and DatabaseTableHasUniqueKey(AuthDBQuery, "account_transmog", "account_id", "unlocked_item_id")
-        and DatabaseTableHasUniqueKey(AuthDBQuery, "account_transmog_removed_appearance", "account_id", "display_id")
-        and DatabaseTableHasUniqueKey(CharDBQuery, "character_transmog", "player_guid", "slot")
-        and DatabaseTableHasUniqueKey(CharDBQuery, "character_transmog_weapon_enchant", "player_guid", "equipment_slot")
-    TRANSMOG_PERSISTENCE_SCHEMA_READY = hasRequiredKeys
-    if #incompatible > 0 then
+    local attempted = false
+    for _, definition in ipairs(TRANSMOG_PERSISTENCE_TABLES) do
+        local isMissing = not DatabaseTableExists(definition.queryFunction, definition.tableName)
+        if not isMissing then
+            -- Existing legacy tables are deliberately untouched. The offline
+            -- migration retains its backup/rebuild path for those cases.
+        elseif type(definition.queryFunction) ~= "function" then
+            print(string.format(
+                "[AppearanceBuddy Transmog] ERROR: %s database query API is unavailable; cannot auto-create %s.",
+                definition.databaseLabel,
+                definition.tableName
+            ))
+        elseif not DatabaseTableExists(definition.queryFunction, definition.sentinelTableName) then
+            print(string.format(
+                "[AppearanceBuddy Transmog] ERROR: %s database is missing its `%s` sentinel; refusing to auto-create %s there.",
+                definition.databaseLabel,
+                definition.sentinelTableName,
+                definition.tableName
+            ))
+        else
+            attempted = true
+            local ok, errorMessage = pcall(definition.queryFunction, definition.createStatement)
+            if not ok then
+                print(string.format(
+                    "[AppearanceBuddy Transmog] ERROR: automatic creation of %s.%s failed: %s",
+                    definition.databaseLabel,
+                    definition.tableName,
+                    tostring(errorMessage)
+                ))
+            end
+        end
+    end
+    return attempted
+end
+
+local function RefreshTransmogPersistenceSchemaReadiness()
+    local missingTables, incompatible, missingKeys = GetTransmogPersistenceSchemaHealth()
+    if #missingTables > 0 or #incompatible > 0 or #missingKeys > 0 then
+        RunTransmogSchemaBootstrap()
+        missingTables, incompatible, missingKeys = GetTransmogPersistenceSchemaHealth()
+    end
+
+    TRANSMOG_PERSISTENCE_SCHEMA_READY = #missingTables == 0 and #incompatible == 0 and #missingKeys == 0
+    if #missingTables > 0 then
         print(string.format(
-            "[AppearanceBuddy Transmog] ERROR: required tables are unavailable or have incompatible columns (%s). Apply %s offline; no live DDL was attempted.",
+            "[AppearanceBuddy Transmog] ERROR: required tables are still missing (%s). Automatic setup could not verify them; check database routing and CREATE TABLE permission, or apply %s and %s offline.",
+            table.concat(missingTables, ", "),
+            AUTH_SCHEMA_MIGRATION_FILE,
+            CHARACTER_SCHEMA_MIGRATION_FILE
+        ))
+    elseif #incompatible > 0 then
+        print(string.format(
+            "[AppearanceBuddy Transmog] ERROR: required tables are unavailable or have incompatible columns (%s). Automatic setup creates only missing tables; apply %s offline to repair existing legacy tables.",
             table.concat(incompatible, ", "),
             AUTH_SCHEMA_MIGRATION_FILE .. " and " .. CHARACTER_SCHEMA_MIGRATION_FILE
         ))
-    elseif not hasRequiredKeys then
+    elseif #missingKeys > 0 then
         print(string.format(
-            "[AppearanceBuddy Transmog] WARNING: required composite unique keys are missing. Paid mutations are disabled; hydration remains available in changed-only compatibility mode. Apply %s and %s offline.",
+            "[AppearanceBuddy Transmog] WARNING: required composite unique keys are missing from %s. Automatic setup does not alter existing tables; paid mutations are disabled. Apply %s and %s offline.",
+            table.concat(missingKeys, ", "),
             AUTH_SCHEMA_MIGRATION_FILE,
             CHARACTER_SCHEMA_MIGRATION_FILE
         ))
     end
+    return TRANSMOG_PERSISTENCE_SCHEMA_READY
 end
+
+RefreshTransmogPersistenceSchemaReadiness()
 
 local ITEM_TEMPLATE_CACHE = {}
 local ITEM_TEMPLATE_NEGATIVE_CACHE_ORDER = {}
@@ -739,6 +886,7 @@ local INVENTORY_SCAN_NEXT_ALLOWED_BY_PLAYER = {}
 local INVENTORY_SCAN_MIN_INTERVAL_SECONDS = 5
 local COSMETIC_WEAPON_ENCHANT_CACHE_BY_PLAYER = {}
 local EXPENSIVE_REQUEST_BUDGET_BY_PLAYER = {}
+local FREE_TRANSMOG_ENABLED_BY_PLAYER = {}
 local PLAYER_TRANSMOG_HYDRATED = {}
 local LOGIN_TRANSMOG_RESTORE_PENDING = {}
 local ONLINE_PLAYER_GUIDS_BY_ACCOUNT = {}
@@ -1379,7 +1527,62 @@ local function PreloadItemTemplateInfos(itemIds)
     return loadSucceeded
 end
 
+local function GetFreeTransmogPlayerGUID(player)
+    if not player or type(player.GetGUIDLow) ~= "function" then
+        return nil
+    end
+
+    local ok, playerGUID = pcall(player.GetGUIDLow, player)
+    playerGUID = ok and tonumber(playerGUID) or nil
+    if not playerGUID or playerGUID ~= math.floor(playerGUID) or playerGUID <= 0 then
+        return nil
+    end
+
+    return playerGUID
+end
+
+local function IsAppearanceBuddyGameMaster(player)
+    if not player or type(player.GetGMRank) ~= "function" then
+        return false
+    end
+
+    local ok, rank = pcall(player.GetGMRank, player)
+    return ok and (tonumber(rank) or 0) > 0
+end
+
+local function IsFreeTransmogEnabled(player)
+    local playerGUID = GetFreeTransmogPlayerGUID(player)
+    if not playerGUID or not FREE_TRANSMOG_ENABLED_BY_PLAYER[playerGUID] then
+        return false
+    end
+
+    if not IsAppearanceBuddyGameMaster(player) then
+        FREE_TRANSMOG_ENABLED_BY_PLAYER[playerGUID] = nil
+        return false
+    end
+
+    return true
+end
+
+local function SetFreeTransmogEnabled(player, enabled)
+    local playerGUID = GetFreeTransmogPlayerGUID(player)
+    if not playerGUID or not IsAppearanceBuddyGameMaster(player) then
+        return false
+    end
+
+    if enabled then
+        FREE_TRANSMOG_ENABLED_BY_PLAYER[playerGUID] = true
+    else
+        FREE_TRANSMOG_ENABLED_BY_PLAYER[playerGUID] = nil
+    end
+    return true
+end
+
 local function GetTransmogBaseSlotCost(player)
+    if IsFreeTransmogEnabled(player) then
+        return 0
+    end
+
     -- Missing/broken level APIs fail closed to the cap instead of creating a
     -- cheap-price exploit. Stock WotLK levels are then clamped to 1..80.
     local level = TRANSMOG_MAX_LEVEL
@@ -3949,6 +4152,7 @@ local function Transmog_OnCharacterDelete(event, guid)
         INVENTORY_SCAN_NEXT_ALLOWED_BY_PLAYER[guid] = nil
         COSMETIC_WEAPON_ENCHANT_CACHE_BY_PLAYER[guid] = nil
         EXPENSIVE_REQUEST_BUDGET_BY_PLAYER[guid] = nil
+        FREE_TRANSMOG_ENABLED_BY_PLAYER[guid] = nil
         PLAYER_TRANSMOG_HYDRATED[guid] = nil
         LOGIN_TRANSMOG_RESTORE_PENDING[guid] = nil
     end
@@ -4048,6 +4252,7 @@ local function Transmog_OnLogout(event, player)
         INVENTORY_SCAN_NEXT_ALLOWED_BY_PLAYER[playerGUID] = nil
         COSMETIC_WEAPON_ENCHANT_CACHE_BY_PLAYER[playerGUID] = nil
         EXPENSIVE_REQUEST_BUDGET_BY_PLAYER[playerGUID] = nil
+        FREE_TRANSMOG_ENABLED_BY_PLAYER[playerGUID] = nil
         PLAYER_TRANSMOG_HYDRATED[playerGUID] = nil
         LOGIN_TRANSMOG_RESTORE_PENDING[playerGUID] = nil
     end
@@ -4428,6 +4633,53 @@ function TransmogHandlers.GetTransmogStateV2(player, requestToken)
         explicitNoSlots,
         BuildTransmogSlotCosts(player),
         GetPlayerCoinage(player)
+    )
+end
+
+-- PLAYER_VISIBLE_ITEM contains the chosen appearance, not the equipped item.
+-- Keep a tiny read-only endpoint for client tooltip code that needs the real
+-- equipment while the transmog window is closed. This deliberately avoids the
+-- database, collection cache, and all appearance mutation paths.
+local TOOLTIP_EQUIPMENT_STATE_PROTOCOL_VERSION = 1
+
+local function BuildTooltipEquipmentState(player)
+    local itemIds = {}
+    for _, visibleSlot in ipairs(VISIBLE_SLOTS) do
+        local equipmentSlot = math.floor(CalculateSlotReverse(visibleSlot))
+        itemIds[visibleSlot] = GetEquippedItemId(player, equipmentSlot)
+    end
+    return itemIds
+end
+
+function TransmogHandlers.GetTooltipEquipmentState(player, requestToken)
+    if not IsAppearanceBuddyPlayer(player) then return end
+
+    local token = tonumber(requestToken)
+    if not token or token ~= token or token < 0 or token > 2147483647 then
+        token = 0
+    else
+        token = math.floor(token)
+    end
+    local budgetAllowed, retryAfter = ConsumeExpensiveRequestBudget(player, 1)
+    if not budgetAllowed then
+        AIO.Handle(
+            player,
+            "Transmog",
+            "TooltipEquipmentStateFailed",
+            token,
+            TOOLTIP_EQUIPMENT_STATE_PROTOCOL_VERSION,
+            math.max(0.25, tonumber(retryAfter) or 0.25)
+        )
+        return
+    end
+
+    AIO.Handle(
+        player,
+        "Transmog",
+        "TooltipEquipmentState",
+        token,
+        TOOLTIP_EQUIPMENT_STATE_PROTOCOL_VERSION,
+        BuildTooltipEquipmentState(player)
     )
 end
 
@@ -5302,6 +5554,25 @@ local function SendUnlockedItemSetResult(player, setName, result, requestToken)
     )
 end
 
+-- Catalog previews show complete outfits, but applying one may only mutate
+-- appearances the account owns. Hide non-set armor only when that slot exists.
+local function BuildUnlockedItemSetRequest(player, eligibleSet)
+    local requested = {}
+    for index, info in ipairs(APPEARANCE_SET_SLOTS) do
+        local unlockedItemId = tonumber(eligibleSet.unlockedItems[index]) or 0
+        local previewItemId = tonumber(eligibleSet.fullItems[index]) or 0
+        if unlockedItemId > 0 then
+            requested[index] = unlockedItemId
+        elseif previewItemId <= 0 and IsArmorSetSlotIndex(index) then
+            local equipSlot = math.floor(CalculateSlotReverse(info.slot))
+            if GetEquippedItemId(player, equipSlot) > 0 then
+                requested[index] = 0
+            end
+        end
+    end
+    return requested
+end
+
 function TransmogHandlers.ApplyUnlockedItemSet(player, itemsetId, requestToken)
     if not IsAppearanceBuddyPlayer(player) then return end
     requestToken = ITEM_SET_CATALOG_SERVICE.NormalizeRequestToken(requestToken)
@@ -5362,18 +5633,7 @@ function TransmogHandlers.ApplyUnlockedItemSet(player, itemsetId, requestToken)
         return
     end
 
-    local requested = {}
-    for index in ipairs(APPEARANCE_SET_SLOTS) do
-        local unlockedItemId = tonumber(eligibleSet.unlockedItems[index]) or 0
-        local previewItemId = tonumber(eligibleSet.fullItems[index]) or 0
-        if unlockedItemId > 0 then
-            requested[index] = unlockedItemId
-        elseif previewItemId <= 0 and IsArmorSetSlotIndex(index) then
-            requested[index] = 0
-        elseif previewItemId > 0 then
-            requested[index] = previewItemId
-        end
-    end
+    local requested = BuildUnlockedItemSetRequest(player, eligibleSet)
 
     local result = ExecuteAppearanceRequest(player, requested, nil)
     SendUnlockedItemSetResult(player, eligibleSet.name, result, requestToken)
@@ -6093,6 +6353,72 @@ function TransmogHandlers.SetSearchCurrentSlotItemIds(player, slot, page, search
     SendAppearanceTabResult(player, currentSlotItemIds, page, hasMorePages, slot, requestToken, totalCount, normalizedFilter, true, "")
 end
 
+local function SendTransmogCommandMessage(player, message)
+    if player and type(player.SendBroadcastMessage) == "function" then
+        pcall(player.SendBroadcastMessage, player, "|cff6ff98<Appearance Buddy>|r: "..message)
+    end
+end
+
+local function PushFreeTransmogModeState(player, enabled)
+    if not player or not AIO or type(AIO.Handle) ~= "function" then
+        return
+    end
+
+    pcall(
+        AIO.Handle,
+        player,
+        "Transmog",
+        "FreeTransmogModeChanged",
+        enabled == true,
+        BuildTransmogSlotCosts(player),
+        GetPlayerCoinage(player)
+    )
+end
+
+local function Transmog_OnCommand(event, player, command)
+    if not player or type(command) ~= "string" then
+        return true
+    end
+
+    local commandName, arguments = command:match("^%s*%.?(%S+)%s*(.-)%s*$")
+    if not commandName or commandName:lower() ~= "transmog" then
+        return true
+    end
+
+    local subcommand, mode = (arguments or ""):match("^(%S+)%s*(.-)%s*$")
+    if not subcommand or subcommand:lower() ~= "free" then
+        return true
+    end
+
+    if not IsAppearanceBuddyGameMaster(player) then
+        SendTransmogCommandMessage(player, "You do not have permission to change transmog pricing.")
+        return false
+    end
+
+    mode = tostring(mode or ""):lower()
+    if mode == "" or mode == "on" then
+        if not SetFreeTransmogEnabled(player, true) then
+            SendTransmogCommandMessage(player, "Free transmog could not be enabled for this character.")
+            return false
+        end
+        PushFreeTransmogModeState(player, true)
+        SendTransmogCommandMessage(player, "Free transmog enabled for this GM session.")
+    elseif mode == "off" then
+        SetFreeTransmogEnabled(player, false)
+        PushFreeTransmogModeState(player, false)
+        SendTransmogCommandMessage(player, "Free transmog disabled; normal prices apply.")
+    elseif mode == "status" then
+        local enabled = IsFreeTransmogEnabled(player)
+        PushFreeTransmogModeState(player, enabled)
+        SendTransmogCommandMessage(player, enabled and "Free transmog is enabled for this GM session."
+            or "Free transmog is disabled; normal prices apply.")
+    else
+        SendTransmogCommandMessage(player, "Usage: .transmog free [on|off|status]")
+    end
+
+    return false
+end
+
 RegisterPlayerEvent(1, Transmog_OnCharacterCreate)
 RegisterPlayerEvent(2, Transmog_OnCharacterDelete)
 RegisterPlayerEvent(3, Transmog_OnLogin)
@@ -6103,6 +6429,7 @@ RegisterPlayerEvent(52, Transmog_OnLootItem)
 RegisterPlayerEvent(53, Transmog_OnLootItem)
 RegisterPlayerEvent(56, Transmog_OnLootItem)
 RegisterPlayerEvent(29, Transmog_OnEquipItem)
+RegisterPlayerEvent(42, Transmog_OnCommand)
 RegisterPlayerEvent(64, Transmog_OnWeaponEnchantVisualUpdate)
 RegisterPlayerEvent(67, Transmog_OnWeaponEnchantVisualUpdate)
 

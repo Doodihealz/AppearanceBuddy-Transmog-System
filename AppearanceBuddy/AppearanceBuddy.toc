@@ -1,0 +1,24 @@
+## Interface: 30300
+## Author: GetLocalPlayer
+## Title: Appearance Buddy
+## Notes: Transmog addon for WotLK 3.3.5
+## OptionalDeps: AIO_Client
+## SavedVariables: AppearanceBuddySettings, AppearanceBuddyTransmogSavedSets, DressMeSettings, DressMeTransmogSavedSets
+## Version: 2.5.5
+
+db\ItemsDB.lua
+db\ItemsAPI.lua
+db\PreviewSetupDB.lua
+db\PreviewSetupAPI.lua
+
+frames\Theme.lua
+frames\QueryItem.lua
+frames\WowheadURL.lua
+frames\DressingRoom.lua
+frames\PreviewList.lua
+frames\ListFrame.lua
+frames\TransmogWire.lua
+frames\TransmogPaging.lua
+
+AppearanceBuddy.lua
+frames\Transmog.lua
