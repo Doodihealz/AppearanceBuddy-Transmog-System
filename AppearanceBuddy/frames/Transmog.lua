@@ -1792,7 +1792,11 @@ updatePreviewModel = function()
         return
     end
 
-    mainFrame.dressingRoom:SetUnit("player")
+    -- Reset is the authoritative rebind point for the central mannequin.  In
+    -- particular, do not follow a post-apply Reset() with SetUnit("player"):
+    -- the wrapper clears the underlying DressUpModel again and Wrath can leave
+    -- that second clear on a blank player model.
+    mainFrame.dressingRoom:Reset()
     mainFrame.dressingRoom:Undress()
 
     for _, info in ipairs(SLOT_DATA) do
@@ -7421,7 +7425,14 @@ transmogTab:SetScript("OnShow", function()
     state.previousUnit = mainFrame.dressingRoom.GetUnitToken and mainFrame.dressingRoom:GetUnitToken() or "player"
     saveDressingRoomView()
     setTransmogDressingRoomStatic(true)
-    mainFrame.dressingRoom:SetUnit("player")
+    -- A normal reopen is already bound to player. Avoid clearing the model
+    -- here because updatePreviewModel performs the single rebind after state
+    -- data is available. Switching away from a legacy target preview still
+    -- needs an immediate player bind even before the first sync arrives.
+    if not mainFrame.dressingRoom.GetUnitToken
+        or mainFrame.dressingRoom:GetUnitToken() ~= "player" then
+        mainFrame.dressingRoom:SetUnit("player")
+    end
     setTransmogDressingRoomView()
 
     selectSlot(state.currentSlot)
@@ -7542,10 +7553,10 @@ local function postMutationModelRebindFrame_OnUpdate(self, elapsed)
         return
     end
 
-    -- PLAYER_VISIBLE_ITEM updates arrive after the Apply result. Rebind each
-    -- custom DressUpModel after that client update settles so ClearModel cannot
-    -- leave it on the temporary empty player model.
-    mainFrame.dressingRoom:Reset()
+    -- PLAYER_VISIBLE_ITEM updates arrive after the Apply result. Re-render
+    -- after that client update settles. updatePreviewModel owns the one
+    -- required player-model reset; doing another reset here would clear the
+    -- DressUpModel twice in the same repaint.
     setTransmogDressingRoomView()
     updatePreviewModel()
 

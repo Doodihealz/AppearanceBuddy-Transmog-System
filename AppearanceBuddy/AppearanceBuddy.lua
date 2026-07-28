@@ -204,6 +204,19 @@ end
 
 
 local mainFrame = CreateFrame("Frame", addon, UIParent)
+local function EnsureMainFrameOnTop()
+    -- CharacterFrame and the other standard panel windows sit above the
+    -- default UI stratum. DIALOG keeps AppearanceBuddy above those panels
+    -- while preserving the higher TOOLTIP stratum for tooltips.
+    mainFrame:SetFrameStrata("DIALOG")
+    mainFrame:SetToplevel(true)
+    mainFrame:Raise()
+end
+
+-- Set the strata before creating any children so the complete window shares
+-- one consistent layer.
+EnsureMainFrameOnTop()
+
 local function UpdateReferenceScale()
     local parentWidth = tonumber(UIParent and UIParent:GetWidth()) or 0
     local parentHeight = tonumber(UIParent and UIParent:GetHeight()) or 0
@@ -235,6 +248,7 @@ do
     mainFrame:SetScript("OnDragStop", mainFrame.StopMovingOrSizing)
     local tempEnchantVisibility = {}
     mainFrame:SetScript("OnShow", function()
+        EnsureMainFrameOnTop()
         UpdateReferenceScale()
         PlaySound("igCharacterInfoOpen")
         for _, frameName in ipairs({"TempEnchant1", "TempEnchant2"}) do
@@ -1427,6 +1441,7 @@ do  --------- Ignore UI scaling
         else
             mainFrame:SetParent(UIParent)
         end
+        EnsureMainFrameOnTop()
         UpdateReferenceScale()
         if mainFrame:IsVisible() then
             -- only to update the main dressing room
@@ -1564,6 +1579,7 @@ do  --------- Apply settings on addon loaded
         else
             mainFrame:SetParent(UIParent)
         end
+        EnsureMainFrameOnTop()
         UpdateReferenceScale()
         -- Lock window
         settingsTab.windowLockedCheckBox:SetChecked(settings.windowLocked)
