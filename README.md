@@ -24,6 +24,13 @@
 
 ---
 
+## IMPORTANT INFORMATION
+
+I have stepped away from the WoW modding scene, this time for good. I have found love for other projects and do other work now. This addon and system went through a pretty huge revamp, and should now be pretty good. It's not perfect, I admit, but I want you guys to have it. Here's my official statement: Take this transmog system and do something great with it. Alter it freely. Just don't sell it :P
+Take care WoW modding. God bless you all!
+
+---
+
 ## Features
 
 ### Appearance Collection
